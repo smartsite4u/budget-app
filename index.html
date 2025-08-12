@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Couples Budget Planner</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#ffffff;
+    --muted:#667085;
+    --text:#0f172a;
+    --accent:#2563eb;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --warn:#ca8a04;
+    --line:#e7eaf1;
+    --chip:#f6f8fb;
+    --input:#ffffff;
+    --shadow:rgba(15, 23, 42, 0.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220;
+      --panel:#0e1628;
+      --muted:#9aa4b2;
+      --text:#e5ecf5;
+      --accent:#4f7bff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#eab308;
+      --line:#1f2a44;
+      --chip:#121a2d;
+      --input:#0e1628;
+      --shadow:rgba(0,0,0,0.25);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif}
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.85));border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  nav{display:flex;gap:8px;flex-wrap:wrap}
+  nav button{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;transition:box-shadow .15s ease, transform .02s ease}
+  nav button:hover{box-shadow:0 1px 3px var(--shadow)}
+  nav button:active{transform:translateY(1px)}
+  nav button.active{outline:2px solid var(--accent)}
+  h1{font-size:18px;margin:0 0 8px}
+  h2{font-size:16px;margin:16px 0 8px}
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 2px var(--shadow)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .row>*{flex:1}
+  .row .fit{flex:0 0 auto}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+  input,select,textarea{width:100%;background:var(--input);border:1px solid #d6dae3;color:var(--text);border-radius:10px;padding:10px;transition:border-color .15s ease, box-shadow .15s ease}
+  input[type="number"]{text-align:right}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent;box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 12px;transition:box-shadow .15s ease, transform .02s ease}
+  .btn:hover{box-shadow:0 1px 3px var(--shadow)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:transparent;color:#fff;font-weight:600}
+  .btn.ghost{background:transparent}
+  .right{justify-content:flex-end}
+  .note{color:var(--muted);font-size:12px}
+  .stack{display:flex;flex-direction:column;gap:8px}
+  .scroll-x{overflow:auto}
+  table{width:100%;border-collapse:collapse;background:var(--panel)}
+  th,td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+  th{color:var(--muted);text-align:left;font-weight:600;background:var(--panel)}
+  .sticky-th thead th{position:sticky;top:0;background:var(--panel)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:var(--chip);border:1px solid var(--line);padding:6px 8px;border-radius:999px;font-size:12px;color:#475467}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px var(--shadow)}
+  .kpi .label{color:var(--muted);font-size:12px}
+  .kpi .value{font-size:20px;margin-top:4px}
+  .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .tag{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid var(--line);background:var(--chip)}
+  .splitbox{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .splitbox .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .small{font-size:12px;color:var(--muted)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+  @media (max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:768px){.cols-2{grid-template-columns:1fr}.kpi{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Couples Budget Planner</h1>
+    <nav id="tabs" role="tablist" aria-label="Primary"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-dashboard" class="panel" hidden>
+    <h2>Dashboard</h2>
+    <div class="kpi" id="kpi"></div>
+
+    <div class="panel" style="margin-top:12px">
+      <div class="row">
+        <div>
+          <label>Who are we budgeting for?</label>
+          <div class="row">
+            <input id="p1-name" placeholder="Your name" aria-label="Partner 1 name">
+            <input id="p2-name" placeholder="Partner 2 name" aria-label="Partner 2 name">
+          </div>
+        </div>
+        <div class="fit">
+          <label class="sr-only">Theme</label>
+          <button class="btn" id="toggle-theme" title="Toggle theme">Toggle light/dark</button>
+        </div>
+      </div>
+      <p class="note">Set names once. Use the Owner field on each line to mark who it belongs to (P1, P2 or Joint). Splits are configured in Settings.</p>
+    </div>
+
+    <h2>6 Month Mini Forecast</h2>
+    <div class="scroll-x">
+      <table id="mini-forecast" class="sticky-th"></table>
+    </div>
+
+    <h2>Share Split Summary (this month)</h2>
+    <div class="splitbox" id="split-cards"></div>
+  </section>
+
+  <section id="view-base" class="grid cols-2">
+    <div class="panel">
+      <h2>Base Income Streams</h2>
+      <div class="row">
+        <div><label>Name</label><input id="bi-name" placeholder="Salary, Side gig, Dividends"></div>
+        <div><label>Owner</label>
+          <select id="bi-owner">
+            <option value="joint">Joint</option>
+            <option value="p1">P1</option>
+            <option value="p2">P2</option>
+          </select>
+        </div>
+        <div><label>Frequency</label>
+          <select id="bi-freq">
+            <option>Monthly</option><option>Fortnightly</option><option>Weekly</option>
+            <option>Quarterly</option><option>Annual</option>
+          </select>
+        </div>
+        <div><label>Amount</label><input id="bi-amt" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="fit"><label class="sr-only">Add</label><button class="btn primary" id="bi-add">Add</button></div>
+      </div>
+      <div class="scroll-x">
+        <table id="bi-table"></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Base Expense Items</h2>
+      <div class="row">
+        <div><label>Name</label><input id="be-name" placeholder="Rent, Groceries, Car insurance"></div>
+        <div><label>Category</label>
+          <input list="cat-list" id="be-cat" placeholder="Housing, Food, Transport">
+          <datalist id="cat-list">
+            <option>Housing</option><option>Utilities</option><option>Food</option><option>Transport</option><option>Insurance</option><option>Health</option><option>Debt</option><option>Savings</option><option>Giving</option><option>Entertainment</option>
+          </datalist>
+        </div>
+        <div><label>Owner</label>
+          <select id="be-owner">
+            <option value="joint">Joint</option>
+            <option value="p1">P1</option>
+            <option value="p2">P2</option>
+          </select>
+        </div>
+        <div><label>Frequency</label>
+          <select id="be-freq">
+            <option>Monthly</option><option>Fortnightly</option><option>Weekly</option>
+            <option>Quarterly</option><option>Annual</option>
+          </select>
+        </div>
+        <div><label>Amount</label><input id="be-amt" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="fit"><label class="sr-only">Add</label><button class="btn primary" id="be-add">Add</button></div>
+      </div>
+      <div class="row">
+        <div class="fit"><button class="btn" id="export-base">Export Base CSV</button></div>
+      </div>
+      <div class="scroll-x">
+        <table id="be-table"></table>
+      </div>
+    </div>
+
+    <div class="panel stack" style="grid-column:1/-1">
+      <h2>Totals</h2>
+      <div class="chips" id="base-totals"></div>
+      <p class="note">Base values are converted to monthly equivalents. Use Prefill on the Monthly page to snapshot these into a chosen month. Later edits in a month do not change the base.</p>
+    </div>
+  </section>
+
+  <section id="view-monthly" class="grid cols-2" hidden>
+    <div class="panel">
+      <h2>Monthly Budgets</h2>
+      <div class="row">
+        <div class="fit"><label>Month</label>
+          <input id="month-picker" type="month">
+        </div>
+        <div class="right fit">
+          <button class="btn" id="prefill-month">Prefill month from base</button>
+          <button class="btn ghost" id="merge-from-base">Merge any new base lines</button>
+          <button class="btn" id="clear-month">Clear month</button>
+        </div>
+      </div>
+      <p class="note" id="month-note"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Month Income</h2>
+      <div class="row">
+        <div><label>Name</label><input id="mi-name" placeholder="e.g. Salary"></div>
+        <div><label>Owner</label>
+          <select id="mi-owner">
+            <option value="joint">Joint</option>
+            <option value="p1">P1</option>
+            <option value="p2">P2</option>
+          </select>
+        </div>
+        <div><label>Frequency</label>
+          <select id="mi-freq">
+            <option>Monthly</option><option>Fortnightly</option><option>Weekly</option>
+            <option>Quarterly</option><option>Annual</option><option>One-off</option>
+          </select>
+        </div>
+        <div><label>Amount</label><input id="mi-amt" type="number" step="0.01"></div>
+        <div class="fit"><label class="sr-only">Add</label><button class="btn primary" id="mi-add">Add</button></div>
+      </div>
+      <div class="scroll-x"><table id="mi-table"></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Month Expenses</h2>
+      <div class="row">
+        <div><label>Name</label><input id="me-name" placeholder="e.g. Rent"></div>
+        <div><label>Category</label><input id="me-cat" placeholder="e.g. Housing" list="cat-list"></div>
+        <div><label>Owner</label>
+          <select id="me-owner">
+            <option value="joint">Joint</option>
+            <option value="p1">P1</option>
+            <option value="p2">P2</option>
+          </select>
+        </div>
+        <div><label>Frequency</label>
+          <select id="me-freq">
+            <option>Monthly</option><option>Fortnightly</option><option>Weekly</option>
+            <option>Quarterly</option><option>Annual</option><option>One-off</option>
+          </select>
+        </div>
+        <div><label>Amount</label><input id="me-amt" type="number" step="0.01"></div>
+        <div class="fit"><label class="sr-only">Add</label><button class="btn primary" id="me-add">Add</button></div>
+      </div>
+      <div class="scroll-x"><table id="me-table"></table></div>
+    </div>
+
+    <div class="panel stack" style="grid-column:1/-1">
+      <h2>Month Totals</h2>
+      <div class="chips" id="month-totals"></div>
+      <div class="splitbox" id="split-this-month"></div>
+      <textarea id="month-notes" rows="3" placeholder="Notes for this month"></textarea>
+    </div>
+  </section>
+
+  <section id="view-forecast" class="panel" hidden>
+    <h2>Forecast Grid</h2>
+    <div class="row">
+      <div class="fit">
+        <label>Forecast start</label>
+        <input id="start-month" type="month">
+      </div>
+      <div class="right fit">
+        <button class="btn" id="export-grid">Export grid CSV</button>
+      </div>
+    </div>
+    <p class="note">This grid uses base lines everywhere, then overlays any month specific edits or one offs. New month only lines appear only where they exist.</p>
+    <div class="scroll-x">
+      <table id="grid-table" class="sticky-th"></table>
+    </div>
+  </section>
+
+  <section id="view-settings" class="grid cols-2" hidden>
+    <div class="panel">
+      <h2>Settings</h2>
+      <div class="row">
+        <div><label>Currency</label>
+          <input id="currency" maxlength="5" placeholder="A$">
+        </div>
+        <div><label>Default forecast start</label><input id="default-start" type="month"></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Split method for joint expenses</label>
+          <select id="split-method">
+            <option value="equal">50/50 equal</option>
+            <option value="custom">Custom percentages</option>
+            <option value="income">By income proportion</option>
+          </select>
+        </div>
+        <div id="custom-split" class="row">
+          <div><label>P1 %</label><input id="split-p1" type="number" min="0" max="100" step="1" value="50"></div>
+          <div><label>P2 %</label><input id="split-p2" type="number" min="0" max="100" step="1" value="50"></div>
+        </div>
+      </div>
+      <div class="row right">
+        <button class="btn primary" id="save-settings">Save settings</button>
+      </div>
+      <p class="note">Income proportion split uses base and current month income marked as P1 or P2.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Backup</h2>
+      <div class="row">
+        <button class="btn" id="export-json">Export JSON</button>
+        <input id="import-file" class="fit" type="file" accept=".json">
+        <button class="btn" id="import-json">Import JSON</button>
+        <button class="btn ghost" id="reset-all">Reset all</button>
+      </div>
+      <p class="note">Export creates a single JSON file with everything. Import will overwrite your current data after you confirm.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ========= Utilities ========= */
+const $ = sel => document.querySelector(sel);
+const el = (tag, attrs={}, kids=[])=>{
+  const n=document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') n.className=v;
+    else if(k==='html') n.innerHTML=v;
+    else if(k==='text') n.textContent=v;
+    else n.setAttribute(k,v);
+  });
+  kids.forEach(k=>n.appendChild(k));
+  return n;
+};
+const uid = ()=>'id_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const debounce=(fn,ms=120)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}};
+
+/* ========= Persistence ========= */
+const storeKey='couples_budget_v22';
+const VERSION=3;
+
+const blank = ()=>({
+  version:VERSION,
+  settings:{
+    currency:'A$',
+    startMonth:new Date().toISOString().slice(0,7),
+    split:{ method:'equal', p1:50, p2:50 },
+    names:{p1:'Partner 1', p2:'Partner 2'}
+  },
+  base:{ incomes:[], expenses:[] },
+  months:{}
+});
+
+let DB = load();
+
+function migrate(db){
+  if(!db.version){ db.version=2; }
+  if(!db.settings.names){ db.settings.names={p1:'Partner 1', p2:'Partner 2'}; }
+  if(!db.settings.split){ db.settings.split={method:'equal', p1:50, p2:50}; }
+  (db.base.incomes||[]).forEach(i=>{ if(!i.owner) i.owner='joint'; });
+  (db.base.expenses||[]).forEach(i=>{ if(!i.owner) i.owner='joint'; });
+  Object.values(db.months||{}).forEach(M=>{
+    (M.incomes||[]).forEach(i=>{ if(!i.owner) i.owner='joint'; });
+    (M.expenses||[]).forEach(i=>{ if(!i.owner) i.owner='joint'; });
+  });
+  db.version=VERSION;
+  return db;
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(storeKey);
+    const db = raw ? JSON.parse(raw) : blank();
+    return migrate(db);
+  }catch(e){ return blank(); }
+}
+const saveNow=()=>{ localStorage.setItem(storeKey, JSON.stringify(DB)); renderAll(); };
+const save = debounce(saveNow, 100);
+
+/* ========= Formats ========= */
+function cur(){ return DB.settings.currency || 'A$'; }
+function fmt(n){
+  const v = Number.isFinite(n) ? n : 0;
+  const code = cur().toUpperCase();
+  const known = ['AUD','USD','NZD','EUR','GBP','CAD'];
+  if(known.includes(code)){
+    return new Intl.NumberFormat(undefined,{style:'currency',currency:code,minimumFractionDigits:2}).format(v);
+  }
+  return cur() + v.toFixed(2);
+}
+const FREQ = { monthly:12, fortnightly:26, weekly:52, quarterly:4, annual:1 };
+function toMonthly(amount, freq){
+  const a=Number(amount)||0;
+  const f=(freq||'monthly').toLowerCase();
+  if(f==='one-off') return 0;
+  const perYear = FREQ[f] || 12;
+  return a*perYear/12;
+}
+function yyyymm(dt){ return dt.toISOString().slice(0,7); }
+function addMonths(ym, k){
+  const [y,m]=ym.split('-').map(Number);
+  const d=new Date(y, m-1 + k, 1);
+  return d.toISOString().slice(0,7);
+}
+function monthlyEqAmount(it){ return it.freq==='One-off'? it.amount : toMonthly(it.amount,it.freq); }
+
+/* ========= Tabs ========= */
+const views = [
+  {id:'dashboard', label:'Dashboard'},
+  {id:'base', label:'Base Budget'},
+  {id:'monthly', label:'Monthly'},
+  {id:'forecast', label:'Forecast Grid'},
+  {id:'settings', label:'Settings'}
+];
+const tabs = $('#tabs');
+views.forEach(v=>{
+  const b=el('button',{text:v.label, role:'tab', 'aria-selected':'false'});
+  b.addEventListener('click',()=>show(v.id,b));
+  tabs.appendChild(b);
+});
+function show(id, btn){
+  document.querySelectorAll('main section').forEach(s=>{ s.hidden=true; });
+  const target = $('#view-'+id);
+  if(target) target.hidden = false;
+  tabs.querySelectorAll('button').forEach(x=>{
+    x.classList.remove('active');
+    x.setAttribute('aria-selected','false');
+  });
+  if(btn){
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
+  }else{
+    const first = tabs.querySelector('button');
+    if(first){
+      first.classList.add('active');
+      first.setAttribute('aria-selected','true');
+    }
+  }
+}
+// initialise by simulating a click on the first tab to keep state in sync
+const firstTab = tabs.querySelector('button');
+if(firstTab) firstTab.click();
+
+/* ========= Names + Theme ========= */
+$('#p1-name').value = DB.settings.names.p1;
+$('#p2-name').value = DB.settings.names.p2;
+['#p1-name','#p2-name'].forEach(id=>{
+  $(id).addEventListener('change', ()=>{
+    DB.settings.names.p1 = $('#p1-name').value || 'Partner 1';
+    DB.settings.names.p2 = $('#p2-name').value || 'Partner 2';
+    save();
+  });
+});
+$('#toggle-theme').addEventListener('click', ()=>{
+  document.documentElement.classList.toggle('force-dark');
+});
+
+/* ========= Base add ========= */
+$('#bi-add').addEventListener('click', ()=>{
+  const name=$('#bi-name').value.trim();
+  const owner=$('#bi-owner').value;
+  const freq=$('#bi-freq').value;
+  const amt=parseFloat($('#bi-amt').value||'0');
+  if(!name) return;
+  DB.base.incomes.push({id:uid(), name, owner, freq, amount:amt});
+  $('#bi-name').value=''; $('#bi-amt').value='';
+  save();
+});
+$('#be-add').addEventListener('click', ()=>{
+  const name=$('#be-name').value.trim();
+  const category=$('#be-cat').value.trim();
+  const owner=$('#be-owner').value;
+  const freq=$('#be-freq').value;
+  const amt=parseFloat($('#be-amt').value||'0');
+  if(!name) return;
+  DB.base.expenses.push({id:uid(), name, category, owner, freq, amount:amt});
+  $('#be-name').value=''; $('#be-cat').value=''; $('#be-amt').value='';
+  save();
+});
+
+/* ========= Base tables render ========= */
+function ownerBadge(v){
+  const map={p1:DB.settings.names.p1||'P1', p2:DB.settings.names.p2||'P2', joint:'Joint'};
+  return el('span',{class:'tag', text:map[v]||'Joint'});
+}
+function renderBaseTables(){
+  // incomes
+  const t=$('#bi-table'); t.innerHTML='';
+  const thead=el('thead',{},[
+    el('tr',{},[
+      el('th',{text:'Name'}),
+      el('th',{text:'Owner'}),
+      el('th',{text:'Freq.'}),
+      el('th',{text:'Amount'}),
+      el('th',{text:'Monthly eq.'}),
+      el('th',{text:''})
+    ])
+  ]);
+  const tb=el('tbody');
+  DB.base.incomes.forEach(it=>{
+    const row=el('tr');
+    const name=el('input',{value:it.name});
+    name.addEventListener('change',()=>{it.name=name.value.trim(); save();});
+    const owner=el('select',{},['joint','p1','p2'].map(v=>el('option',{text:v.toUpperCase(), value:v})));
+    owner.value=it.owner||'joint';
+    owner.addEventListener('change',()=>{it.owner=owner.value; save();});
+    const freq=el('select',{},['Monthly','Fortnightly','Weekly','Quarterly','Annual'].map(o=>el('option',{text:o})));
+    freq.value=it.freq;
+    freq.addEventListener('change',()=>{it.freq=freq.value; save();});
+    const amt=el('input',{type:'number',step:'0.01',value:it.amount});
+    amt.addEventListener('change',()=>{it.amount=parseFloat(amt.value||'0'); save();});
+    const m=el('td',{text:fmt(toMonthly(it.amount,it.freq))});
+    const del=el('button',{class:'btn ghost',text:'Delete'});
+    del.addEventListener('click',()=>{ DB.base.incomes=DB.base.incomes.filter(x=>x.id!==it.id); save();});
+    row.append(
+      el('td',{},[name]),
+      el('td',{},[ownerBadge(it.owner||'joint'), owner]),
+      el('td',{},[freq]),
+      el('td',{},[amt]),
+      m,
+      el('td',{},[del])
+    );
+    tb.appendChild(row);
+  });
+  t.append(thead,tb);
+
+  // expenses
+  const te=$('#be-table'); te.innerHTML='';
+  const the2=el('thead',{},[
+    el('tr',{},[
+      el('th',{text:'Name'}),
+      el('th',{text:'Category'}),
+      el('th',{text:'Owner'}),
+      el('th',{text:'Freq.'}),
+      el('th',{text:'Amount'}),
+      el('th',{text:'Monthly eq.'}),
+      el('th',{text:''})
+    ])
+  ]);
+  const tbe=el('tbody');
+  DB.base.expenses.forEach(it=>{
+    const row=el('tr');
+    const name=el('input',{value:it.name});
+    name.addEventListener('change',()=>{it.name=name.value.trim(); save();});
+    const cat=el('input',{value:it.category||''});
+    cat.addEventListener('change',()=>{it.category=cat.value.trim(); save();});
+    const owner=el('select',{},['joint','p1','p2'].map(v=>el('option',{text:v.toUpperCase(), value:v})));
+    owner.value=it.owner||'joint';
+    owner.addEventListener('change',()=>{it.owner=owner.value; save();});
+    const freq=el('select',{},['Monthly','Fortnightly','Weekly','Quarterly','Annual'].map(o=>el('option',{text:o})));
+    freq.value=it.freq;
+    freq.addEventListener('change',()=>{it.freq=freq.value; save();});
+    const amt=el('input',{type:'number',step:'0.01',value:it.amount});
+    amt.addEventListener('change',()=>{it.amount=parseFloat(amt.value||'0'); save();});
+    const m=el('td',{text:fmt(toMonthly(it.amount,it.freq))});
+    const del=el('button',{class:'btn ghost',text:'Delete'});
+    del.addEventListener('click',()=>{ DB.base.expenses=DB.base.expenses.filter(x=>x.id!==it.id); save();});
+    row.append(
+      el('td',{},[name]),
+      el('td',{},[cat]),
+      el('td',{},[ownerBadge(it.owner||'joint'), owner]),
+      el('td',{},[freq]),
+      el('td',{},[amt]),
+      m,
+      el('td',{},[del])
+    );
+    tbe.appendChild(row);
+  });
+  te.append(the2,tbe);
+
+  // totals
+  const biM = DB.base.incomes.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const beM = DB.base.expenses.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const chips = $('#base-totals');
+  chips.innerHTML='';
+  chips.append(
+    el('div',{class:'chip'},[document.createTextNode('Base income monthly: '+fmt(biM))]),
+    el('div',{class:'chip'},[document.createTextNode('Base expenses monthly: '+fmt(beM))]),
+    el('div',{class:'chip'},[document.createTextNode('Base net monthly: '+fmt(biM-beM))])
+  );
+}
+
+/* ========= Monthly management ========= */
+function ensureMonth(ym){
+  DB.months[ym] = DB.months[ym] || { incomes:[], expenses:[], notes:'' };
+  return DB.months[ym];
+}
+$('#month-picker').value = DB.settings.startMonth || new Date().toISOString().slice(0,7);
+
+$('#prefill-month').addEventListener('click', ()=>{
+  const ym=$('#month-picker').value;
+  const M=ensureMonth(ym);
+  if(M.incomes.length || M.expenses.length){
+    if(!confirm('This month already has items. Add base items again as detached copies?')) return;
+  }
+  const existIdsI=new Set(M.incomes.map(x=>x.baseId||''));
+  DB.base.incomes.forEach(b=>{
+    if(!existIdsI.has(b.id)){
+      M.incomes.push({id:uid(), baseId:b.id, name:b.name, owner:b.owner||'joint', freq:b.freq, amount:b.amount, detached:true});
+    }
+  });
+  const existIdsE=new Set(M.expenses.map(x=>x.baseId||''));
+  DB.base.expenses.forEach(b=>{
+    if(!existIdsE.has(b.id)){
+      M.expenses.push({id:uid(), baseId:b.id, name:b.name, owner:b.owner||'joint', category:b.category, freq:b.freq, amount:b.amount, detached:true});
+    }
+  });
+  save();
+});
+$('#merge-from-base').addEventListener('click', ()=>{
+  const ym=$('#month-picker').value; const M=ensureMonth(ym);
+  const existI=new Set(M.incomes.map(x=>x.baseId||''));
+  DB.base.incomes.forEach(b=>{
+    if(!existI.has(b.id)) M.incomes.push({id:uid(), baseId:b.id, name:b.name, owner:b.owner||'joint', freq:b.freq, amount:b.amount, detached:true});
+  });
+  const existE=new Set(M.expenses.map(x=>x.baseId||''));
+  DB.base.expenses.forEach(b=>{
+    if(!existE.has(b.id)) M.expenses.push({id:uid(), baseId:b.id, name:b.name, owner:b.owner||'joint', category:b.category, freq:b.freq, amount:b.amount, detached:true});
+  });
+  save();
+});
+$('#clear-month').addEventListener('click', ()=>{
+  const ym=$('#month-picker').value;
+  if(confirm('Remove all items for '+ym+'?')){
+    DB.months[ym]={incomes:[],expenses:[],notes:''};
+    save();
+  }
+});
+$('#mi-add').addEventListener('click', ()=>{
+  const ym=$('#month-picker').value; const M=ensureMonth(ym);
+  const name=$('#mi-name').value.trim(), owner=$('#mi-owner').value, freq=$('#mi-freq').value, amt=parseFloat($('#mi-amt').value||'0');
+  if(!name) return;
+  M.incomes.push({id:uid(), name, owner, freq, amount:amt});
+  $('#mi-name').value=''; $('#mi-amt').value='';
+  save();
+});
+$('#me-add').addEventListener('click', ()=>{
+  const ym=$('#month-picker').value; const M=ensureMonth(ym);
+  const name=$('#me-name').value.trim(), cat=$('#me-cat').value.trim(), owner=$('#me-owner').value, freq=$('#me-freq').value, amt=parseFloat($('#me-amt').value||'0');
+  if(!name) return;
+  M.expenses.push({id:uid(), name, owner, category:cat, freq, amount:amt});
+  $('#me-name').value=''; $('#me-cat').value=''; $('#me-amt').value='';
+  save();
+});
+$('#month-notes').addEventListener('change', ()=>{
+  const ym=$('#month-picker').value; const M=ensureMonth(ym);
+  M.notes=$('#month-notes').value; save();
+});
+$('#month-picker').addEventListener('change', renderMonthly);
+
+function renderMonthly(){
+  const ym=$('#month-picker').value; const M=ensureMonth(ym);
+  $('#month-notes').value=M.notes||'';
+  $('#month-note').textContent = 'Editing ' + ym + '. Base lines appear as detached copies once prefilling. You can add one offs using frequency One-off.';
+
+  // incomes table
+  const ti=$('#mi-table'); ti.innerHTML='';
+  ti.append(
+    el('thead',{},[el('tr',{},[
+      el('th',{text:'Name'}), el('th',{text:'Owner'}), el('th',{text:'Freq.'}), el('th',{text:'Amount'}), el('th',{text:'Monthly eq.'}), el('th',{text:''})
+    ])])
+  );
+  const tbi=el('tbody');
+  (M.incomes||[]).forEach(it=>{
+    const row=el('tr');
+    const name=el('input',{value:it.name}); name.addEventListener('change',()=>{it.name=name.value.trim(); save();});
+    const owner=el('select',{},['joint','p1','p2'].map(v=>el('option',{text:v.toUpperCase(), value:v}))); owner.value=it.owner||'joint'; owner.addEventListener('change',()=>{it.owner=owner.value; save();});
+    const freq=el('select',{},['Monthly','Fortnightly','Weekly','Quarterly','Annual','One-off'].map(o=>el('option',{text:o}))); freq.value=it.freq; freq.addEventListener('change',()=>{it.freq=freq.value; save();});
+    const amt=el('input',{type:'number',step:'0.01',value:it.amount}); amt.addEventListener('change',()=>{it.amount=parseFloat(amt.value||'0'); save();});
+    const me=fmt(monthlyEqAmount(it));
+    const del=el('button',{class:'btn ghost',text:'Delete'}); del.addEventListener('click',()=>{M.incomes=M.incomes.filter(x=>x.id!==it.id); save();});
+    row.append(el('td',{},[name]), el('td',{},[ownerBadge(it.owner||'joint'), owner]), el('td',{},[freq]), el('td',{},[amt]), el('td',{text:me}), el('td',{},[del]));
+    tbi.appendChild(row);
+  });
+  ti.append(tbi);
+
+  // expenses table
+  const te=$('#me-table'); te.innerHTML='';
+  te.append(
+    el('thead',{},[el('tr',{},[
+      el('th',{text:'Name'}), el('th',{text:'Category'}), el('th',{text:'Owner'}), el('th',{text:'Freq.'}), el('th',{text:'Amount'}), el('th',{text:'Monthly eq.'}), el('th',{text:''})
+    ])])
+  );
+  const tbe=el('tbody');
+  (M.expenses||[]).forEach(it=>{
+    const row=el('tr');
+    const name=el('input',{value:it.name}); name.addEventListener('change',()=>{it.name=name.value.trim(); save();});
+    const cat=el('input',{value:it.category||''}); cat.addEventListener('change',()=>{it.category=cat.value.trim(); save();});
+    const owner=el('select',{},['joint','p1','p2'].map(v=>el('option',{text:v.toUpperCase(), value:v}))); owner.value=it.owner||'joint'; owner.addEventListener('change',()=>{it.owner=owner.value; save();});
+    const freq=el('select',{},['Monthly','Fortnightly','Weekly','Quarterly','Annual','One-off'].map(o=>el('option',{text:o}))); freq.value=it.freq; freq.addEventListener('change',()=>{it.freq=freq.value; save();});
+    const amt=el('input',{type:'number',step:'0.01',value:it.amount}); amt.addEventListener('change',()=>{it.amount=parseFloat(amt.value||'0'); save();});
+    const me=fmt(monthlyEqAmount(it));
+    const del=el('button',{class:'btn ghost',text:'Delete'}); del.addEventListener('click',()=>{M.expenses=M.expenses.filter(x=>x.id!==it.id); save();});
+    row.append(el('td',{},[name]), el('td',{},[cat]), el('td',{},[ownerBadge(it.owner||'joint'), owner]), el('td',{},[freq]), el('td',{},[amt]), el('td',{text:me}), el('td',{},[del]));
+    tbe.appendChild(row);
+  });
+  te.append(tbe);
+
+  // totals and split
+  const monthIncome = (M.incomes||[]).reduce((s,i)=> s + monthlyEqAmount(i), 0);
+  const monthExpense = (M.expenses||[]).reduce((s,i)=> s + monthlyEqAmount(i), 0);
+  const chips=$('#month-totals'); chips.innerHTML='';
+  chips.append(
+    el('div',{class:'chip'},[document.createTextNode('Income monthly eq: '+fmt(monthIncome))]),
+    el('div',{class:'chip'},[document.createTextNode('Expenses monthly eq: '+fmt(monthExpense))]),
+    el('div',{class:'chip'},[document.createTextNode('Net monthly eq: '+fmt(monthIncome - monthExpense))])
+  );
+  renderSplitThisMonth(ym);
+}
+
+/* ========= Dashboard ========= */
+function monthTotalsWithBaseOverlay(ym){
+  let inc = DB.base.incomes.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  let exp = DB.base.expenses.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const M = DB.months[ym];
+  if(M){
+    const baseI = new Map(DB.base.incomes.map(i=>[i.id, toMonthly(i.amount,i.freq)]));
+    const baseE = new Map(DB.base.expenses.map(i=>[i.id, toMonthly(i.amount,i.freq)]));
+    if(M.incomes){
+      const replaced = new Set(M.incomes.filter(x=>x.baseId).map(x=>x.baseId));
+      replaced.forEach(id=>{ inc -= (baseI.get(id)||0); });
+      M.incomes.forEach(it=>{ inc += monthlyEqAmount(it); });
+    }
+    if(M.expenses){
+      const replaced = new Set(M.expenses.filter(x=>x.baseId).map(x=>x.baseId));
+      replaced.forEach(id=>{ exp -= (baseE.get(id)||0); });
+      M.expenses.forEach(it=>{ exp += monthlyEqAmount(it); });
+    }
+  }
+  return {inc,exp};
+}
+
+function renderDashboard(){
+  const baseMIncome = DB.base.incomes.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const baseMExpense = DB.base.expenses.reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const kpi=$('#kpi'); kpi.innerHTML='';
+  const cards=[
+    {label:'Base income monthly', value:fmt(baseMIncome)},
+    {label:'Base expenses monthly', value:fmt(baseMExpense)},
+    {label:'Base net monthly', value:fmt(baseMIncome-baseMExpense), cls:(baseMIncome-baseMExpense)>=0?'good':'bad'},
+    {label:'Base income fortnightly', value:fmt(baseMIncome*12/26)}
+  ];
+  cards.forEach(c=>{
+    const card=el('div',{class:'card'});
+    card.append(el('div',{class:'label',text:c.label}), el('div',{class:'value '+(c.cls||'') ,text:c.value}));
+    kpi.appendChild(card);
+  });
+
+  // mini forecast
+  const t=$('#mini-forecast'); t.innerHTML='';
+  const head=el('thead'); const tr=el('tr');
+  tr.append(el('th',{text:'Month'}), el('th',{text:'Income'}), el('th',{text:'Expenses'}), el('th',{text:'Net'}), el('th',{text:'Cumulative'}));
+  head.append(tr);
+  const body=el('tbody');
+  const start = DB.settings.startMonth || new Date().toISOString().slice(0,7);
+  let cum=0;
+  for(let i=0;i<6;i++){
+    const ym = addMonths(start,i);
+    const {inc,exp} = monthTotalsWithBaseOverlay(ym);
+    const net = inc-exp; cum += net;
+    body.appendChild(el('tr',{},[
+      el('td',{text:ym}),
+      el('td',{text:fmt(inc)}),
+      el('td',{text:fmt(exp)}),
+      el('td',{text:fmt(net), class: net>=0?'good':'bad'}),
+      el('td',{text:fmt(cum), class: cum>=0?'good':'bad'})
+    ]));
+  }
+  t.append(head, body);
+
+  renderSplitCards(start);
+}
+
+/* ========= Split logic ========= */
+function splitRatiosForMonth(ym){
+  const method = DB.settings.split?.method || 'equal';
+  if(method==='equal') return {p1:0.5, p2:0.5};
+  if(method==='custom'){
+    const p1=(Number(DB.settings.split.p1)||50)/100;
+    const p2=(Number(DB.settings.split.p2)||50)/100;
+    const s=p1+p2 || 1;
+    return {p1:p1/s, p2:p2/s};
+  }
+  const month = DB.months[ym] || {incomes:[]};
+  const baseP1 = DB.base.incomes.filter(i=>i.owner==='p1').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const baseP2 = DB.base.incomes.filter(i=>i.owner==='p2').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const mP1 = month.incomes.filter(i=>i.owner==='p1').reduce((s,i)=>s+monthlyEqAmount(i),0);
+  const mP2 = month.incomes.filter(i=>i.owner==='p2').reduce((s,i)=>s+monthlyEqAmount(i),0);
+  const t = baseP1+baseP2+mP1+mP2;
+  if(t<=0) return {p1:0.5, p2:0.5};
+  return {p1:(baseP1+mP1)/t, p2:(baseP2+mP2)/t};
+}
+function splitSummaryForMonth(ym){
+  const M=ensureMonth(ym);
+  const ownIncP1 = (M.incomes||[]).filter(i=>i.owner==='p1').reduce((s,i)=>s+monthlyEqAmount(i),0) + DB.base.incomes.filter(i=>i.owner==='p1').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const ownIncP2 = (M.incomes||[]).filter(i=>i.owner==='p2').reduce((s,i)=>s+monthlyEqAmount(i),0) + DB.base.incomes.filter(i=>i.owner==='p2').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const ownExpP1 = (M.expenses||[]).filter(i=>i.owner==='p1').reduce((s,i)=>s+monthlyEqAmount(i),0) + DB.base.expenses.filter(i=>i.owner==='p1').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const ownExpP2 = (M.expenses||[]).filter(i=>i.owner==='p2').reduce((s,i)=>s+monthlyEqAmount(i),0) + DB.base.expenses.filter(i=>i.owner==='p2').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const jointExp = (M.expenses||[]).filter(i=>i.owner==='joint').reduce((s,i)=>s+monthlyEqAmount(i),0) + DB.base.expenses.filter(i=>i.owner==='joint').reduce((s,i)=>s+toMonthly(i.amount,i.freq),0);
+  const {p1, p2} = splitRatiosForMonth(ym);
+  return {
+    p1:{ income: ownIncP1, ownExp:ownExpP1, jointShare: jointExp * p1 },
+    p2:{ income: ownIncP2, ownExp:ownExpP2, jointShare: jointExp * p2 },
+    joint: jointExp,
+    ratios:{p1,p2}
+  };
+}
+function renderSplitThisMonth(ym){
+  const box=$('#split-this-month'); box.innerHTML='';
+  const s = splitSummaryForMonth(ym);
+  const p1n = DB.settings.names.p1||'P1';
+  const p2n = DB.settings.names.p2||'P2';
+  const p1Out = s.p1.ownExp + s.p1.jointShare;
+  const p2Out = s.p2.ownExp + s.p2.jointShare;
+  const c1=el('div',{class:'card'},[
+    el('div',{class:'small',text:p1n+' share'}),
+    el('div',{class:'value',text:fmt(p1Out)}),
+    el('div',{class:'small',text:`Income ${fmt(s.p1.income)} • Ratio ${(s.ratios.p1*100).toFixed(0)}%`})
+  ]);
+  const c2=el('div',{class:'card'},[
+    el('div',{class:'small',text:p2n+' share'}),
+    el('div',{class:'value',text:fmt(p2Out)}),
+    el('div',{class:'small',text:`Income ${fmt(s.p2.income)} • Ratio ${(s.ratios.p2*100).toFixed(0)}%`})
+  ]);
+  const cj=el('div',{class:'card'},[
+    el('div',{class:'small',text:'Joint expenses'}),
+    el('div',{class:'value',text:fmt(s.joint)}),
+    el('div',{class:'small',text:`Split ${((s.ratios.p1*100)|0)}/${((s.ratios.p2*100)|0)}`})
+  ]);
+  box.append(c1,c2,cj);
+}
+function renderSplitCards(start){
+  const sc=$('#split-cards'); sc.innerHTML='';
+  renderSplitThisMonth(start);
+}
+
+/* ========= Forecast grid ========= */
+function renderGrid(){
+  const t=$('#grid-table'); t.innerHTML='';
+  const start = $('#start-month').value || (DB.settings.startMonth || new Date().toISOString().slice(0,7));
+  $('#start-month').value = start;
+
+  const months = Array.from({length:12},(_,i)=>addMonths(start,i));
+  const rowsIncome = new Map(); const rowsExpense = new Map();
+  DB.base.incomes.forEach(i=>rowsIncome.set(i.id,{name:i.name, baseId:i.id}));
+  DB.base.expenses.forEach(i=>rowsExpense.set(i.id,{name:i.name, baseId:i.id}));
+  months.forEach(ym=>{
+    const M = DB.months[ym];
+    if(!M) return;
+    (M.incomes||[]).forEach(i=>{
+      const key = i.baseId || i.id;
+      if(!rowsIncome.has(key)) rowsIncome.set(key,{name:i.name, baseId:i.baseId||null});
+    });
+    (M.expenses||[]).forEach(i=>{
+      const key = i.baseId || i.id;
+      if(!rowsExpense.has(key)) rowsExpense.set(key,{name:i.name, baseId:i.baseId||null});
+    });
+  });
+
+  const thead=el('thead'); const top=el('tr');
+  top.append(el('th',{text:'Line item'}));
+  months.forEach(m=>top.append(el('th',{text:m})));
+  top.append(el('th',{text:'Annual total'}));
+  thead.append(top);
+
+  const body=el('tbody');
+
+  function cellValue(side, key, ym){
+    const M = DB.months[ym];
+    let entry=null;
+    if(M){
+      const list = side==='inc'? M.incomes : M.expenses;
+      entry = (list||[]).find(x=> (x.baseId && x.baseId===key) || (!x.baseId && x.id===key));
+      if(entry) return monthlyEqAmount(entry);
+    }
+    if(side==='inc'){
+      const b = DB.base.incomes.find(x=>x.id===key);
+      return b ? toMonthly(b.amount, b.freq) : 0;
+    }else{
+      const b = DB.base.expenses.find(x=>x.id===key);
+      return b ? toMonthly(b.amount, b.freq) : 0;
+    }
+  }
+
+  body.appendChild(el('tr',{},[el('td',{html:'<strong>Income</strong>'}), ...months.map(()=>el('td')), el('td')]));
+  rowsIncome.forEach((meta,key)=>{
+    let annual=0;
+    const row=el('tr');
+    row.append(el('td',{text:meta.name}));
+    months.forEach(m=>{
+      const v = cellValue('inc', key, m);
+      annual += v;
+      row.append(el('td',{text:fmt(v)}));
+    });
+    row.append(el('td',{text:fmt(annual)}));
+    body.appendChild(row);
+  });
+
+  body.appendChild(el('tr',{},[el('td',{html:'<strong>Expenses</strong>'}), ...months.map(()=>el('td')), el('td')]));
+  rowsExpense.forEach((meta,key)=>{
+    let annual=0;
+    const row=el('tr');
+    row.append(el('td',{text:meta.name}));
+    months.forEach(m=>{
+      const v = cellValue('exp', key, m);
+      annual += v;
+      row.append(el('td',{text:fmt(v)}));
+    });
+    row.append(el('td',{text:fmt(annual)}));
+    body.appendChild(row);
+  });
+
+  const totals=el('tr');
+  totals.append(el('td',{html:'<strong>Net</strong>'}));
+  let netAnnual=0;
+  months.forEach(m=>{
+    const {inc,exp} = monthTotalsWithBaseOverlay(m);
+    const net = inc-exp;
+    netAnnual += net;
+    totals.append(el('td',{text:fmt(net), class: net>=0?'good':'bad'}));
+  });
+  totals.append(el('td',{text:fmt(netAnnual), class: netAnnual>=0?'good':'bad'}));
+  body.appendChild(totals);
+
+  t.append(thead,body);
+}
+
+/* ========= Settings & backup ========= */
+$('#currency').value = DB.settings.currency || 'A$';
+$('#default-start').value = DB.settings.startMonth || new Date().toISOString().slice(0,7);
+$('#split-method').value = DB.settings.split?.method || 'equal';
+$('#split-p1').value = DB.settings.split?.p1 ?? 50;
+$('#split-p2').value = DB.settings.split?.p2 ?? 50;
+function showCustomSplit(){ $('#custom-split').style.display = ($('#split-method').value==='custom')? 'flex' : 'none'; }
+showCustomSplit();
+$('#split-method').addEventListener('change', showCustomSplit);
+
+$('#save-settings').addEventListener('click',()=>{
+  DB.settings.currency = $('#currency').value || 'A$';
+  DB.settings.startMonth = $('#default-start').value || new Date().toISOString().slice(0,7);
+  DB.settings.split = {
+    method: $('#split-method').value,
+    p1: Number($('#split-p1').value)||50,
+    p2: Number($('#split-p2').value)||50
+  };
+  save();
+});
+$('#export-json').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='budget-backup.json';
+  a.click();
+});
+$('#import-json').addEventListener('click', ()=>{
+  const f=$('#import-file').files[0];
+  if(!f) return alert('Choose a file first');
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(!confirm('Import will replace current data. Continue?')) return;
+      DB=migrate(data);
+      saveNow();
+    }catch(e){ alert('Could not import file'); }
+  };
+  r.readAsText(f);
+});
+$('#reset-all').addEventListener('click', ()=>{
+  if(confirm('Reset everything?')){
+    DB=blank();
+    saveNow();
+  }
+});
+
+$('#export-base').addEventListener('click', ()=>{
+  const rows=[['Type','Name','Category','Owner','Frequency','Amount','MonthlyEq']];
+  DB.base.incomes.forEach(i=> rows.push(['Income', i.name,'', i.owner||'joint', i.freq, i.amount, toMonthly(i.amount,i.freq).toFixed(2)]));
+  DB.base.expenses.forEach(i=> rows.push(['Expense', i.name, i.category||'', i.owner||'joint', i.freq, i.amount, toMonthly(i.amount,i.freq).toFixed(2)]));
+  const csv = rows.map(r=> r.map(x=>{
+    const s=String(x);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='base-lines.csv';
+  a.click();
+});
+
+/* ========= Render ========= */
+function renderAll(){
+  renderBaseTables();
+  renderMonthly();
+  renderDashboard();
+  renderGrid();
+}
+renderAll();
+
+/* ========= Tiny self tests (console) ========= */
+(function tests(){
+  const eq = (a,b)=>Math.abs(a-b) < 1e-6;
+  console.assert(eq(toMonthly(520,'weekly'), 520*52/12), 'toMonthly weekly');
+  console.assert(eq(toMonthly(100,'monthly'), 100), 'toMonthly monthly');
+  console.assert(eq(toMonthly(1200,'annual'), 100), 'toMonthly annual');
+  console.assert(addMonths('2025-01', 1)==='2025-02', 'addMonths forward');
+  console.assert(addMonths('2025-12', 1)==='2026-01', 'addMonths year wrap');
+  // split equal fallback
+  const r = splitRatiosForMonth(DB.settings.startMonth);
+  console.assert(eq(r.p1+r.p2,1), 'split ratios sum to 1');
+  console.log('Self tests passed.');
+})();
+</script>
+</body>
+</html>
